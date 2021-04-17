@@ -1,6 +1,16 @@
 import React, { useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { Draggable } from "react-beautiful-dnd";
+import DoneIcon from "@material-ui/icons/Done";
+
+const appear = keyframes`
+   0%{
+      opacity: .7;
+   }
+   100%{
+      opacity: 1;
+   }
+`;
 
 const shake = keyframes`
   0% {
@@ -52,23 +62,49 @@ const Container = styled.div`
       ? "lightgreen"
       : "white"};
   position: relative;
-  /* width: 40px;
-  height: 40px; */
   display: flex;
-  /* justify-content: center; */
-  /* align-items: center; */
+  animation: ${appear} 1s ease-in;
   &:hover ${CloseButton} {
     opacity: 1;
   }
 `;
 
+const TaskBody = styled.div`
+  display: flex;
+  width: 100%;
+`;
+
 const CheckBox = styled.input``;
+
+const TaskInput = styled.input`
+  border: none;
+  outline: none;
+  width: 100%;
+`;
 
 export default function Task(props) {
   const [block, setBlock] = useState(false);
+  const [edit, setEdit] = useState(false);
+  const [taskBody, setTaskBody] = useState(props.task.content);
 
   const handleCheckBox = () => {
     setBlock(!block);
+  };
+
+  const handleTaskEdit = (e) => {
+    setTaskBody(e.target.value);
+  };
+
+  const handleEditDone = () => {
+    setEdit(false);
+    props.editTask(props.task.id, taskBody);
+  };
+
+  const handleFinish = (e) => {
+    if (e.keyCode === 13 || e.keyCode === 27) {
+      setEdit(false);
+      props.editTask(props.task.id, taskBody);
+    }
   };
 
   return (
@@ -85,14 +121,37 @@ export default function Task(props) {
           isDragging={snapshot.isDragging}
           isDragDisabled={block}
         >
-          <CheckBox type="checkbox" checked={block} onChange={handleCheckBox} />
-          {props.task.content}
-          {!block && (
-            <CloseButton
-              onClick={() => props.deleteTask(props.task.id, props.columnName)}
-            >
-              x
-            </CloseButton>
+          {!edit ? (
+            <TaskBody onDoubleClick={() => setEdit(true)}>
+              <CheckBox
+                type="checkbox"
+                checked={block}
+                onChange={handleCheckBox}
+              />
+              {taskBody}
+              {!block && (
+                <CloseButton
+                  onClick={() =>
+                    props.deleteTask(props.task.id, props.columnName)
+                  }
+                >
+                  x
+                </CloseButton>
+              )}
+            </TaskBody>
+          ) : (
+            <>
+              <TaskInput
+                value={taskBody}
+                onChange={handleTaskEdit}
+                autoFocus
+                onKeyDown={handleFinish}
+              />
+              <DoneIcon
+                onClick={handleEditDone}
+                style={{ cursor: "pointer" }}
+              />
+            </>
           )}
         </Container>
       )}

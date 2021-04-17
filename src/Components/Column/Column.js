@@ -97,7 +97,7 @@ function Column(props) {
   };
 
   const handleFinish = (e) => {
-    if (e.keyCode === 13) {
+    if (e.keyCode === 13 || e.keyCode === 27) {
       setToggle(false);
       props.handleColumnTitleChange(props.column.id, columnTitle);
     }
@@ -122,13 +122,14 @@ function Column(props) {
                 value={columnTitle}
                 onKeyDown={handleFinish}
                 onChange={handleInputChange}
+                autoFocus
               />
               <Done onClick={handleDone}>
                 <DoneIcon />
               </Done>
             </TitleInputWrapper>
           ) : (
-            <Title {...provided.dragHandleProps}>
+            <Title {...provided.dragHandleProps} onDoubleClick={handleEdit}>
               <div style={{ width: "100%" }}>{props.column.title}</div>
 
               <Edit onClick={handleEdit}>
@@ -155,6 +156,7 @@ function Column(props) {
                     index={ind}
                     deleteTask={props.deleteTask}
                     columnName={props.column.id}
+                    editTask={props.editTask}
                   />
                 ))}
                 {provided.placeholder}
