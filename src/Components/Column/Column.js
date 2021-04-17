@@ -11,8 +11,7 @@ const Container = styled.div`
   margin: 8px;
   border: 1px dotted lightgrey;
   transition: background-color 1.5s ease-in-out;
-  background-color: ${(props) =>
-    props.isDragging ? "rgb(66,133,244)" : "inherit"};
+  background-color: ${(props) => (props.isDragging ? "#5190f5" : "inherit")};
   border-radius: 6px;
   width: 220px;
   user-select: none;
@@ -60,7 +59,7 @@ const TaskList = styled.div`
   padding: 8px;
   transition: background-color 0.2s ease-in-out;
   background-color: ${(props) =>
-    props.isDraggingOver ? "rgb(66,133,244)" : "inherit"};
+    props.isDraggingOver ? "#5190f5" : "inherit"};
   flex-grow: 1;
   min-height: 100px;
   position: relative;

@@ -6,6 +6,8 @@ import styled, { keyframes } from "styled-components";
 import { isMobile } from "react-device-detect";
 import EditIcon from "@material-ui/icons/Edit";
 import DoneIcon from "@material-ui/icons/Done";
+import SaveIcon from "@material-ui/icons/Save";
+import ReplayIcon from "@material-ui/icons/Replay";
 import "./App.css";
 
 const gradient = keyframes`
@@ -18,6 +20,16 @@ const gradient = keyframes`
     100% {
         background-position: 0% 50%;
     }
+`;
+
+const rotation = keyframes`
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-359deg);
+  }
+}
 `;
 
 const Outer = styled.div`
@@ -57,6 +69,10 @@ const TitleInput = styled.input`
   width: 100%;
 `;
 
+const EditButtonContainer = styled.div`
+  opacity: 0;
+  transition: opacity 0.5s ease;
+`;
 const Title = styled.div`
   font-weight: 500;
   font-size: 2em;
@@ -65,6 +81,12 @@ const Title = styled.div`
   text-align: center;
   width: 100%;
   cursor: default;
+  display: flex;
+  justify-content: center;
+
+  &:hover ${EditButtonContainer} {
+    opacity: 1;
+  }
 `;
 
 const Done = styled.div`
@@ -73,6 +95,36 @@ const Done = styled.div`
   top: 10px;
   color: white;
   cursor: pointer;
+`;
+
+const SaveIconContainer = styled.div`
+  cursor: pointer;
+
+  transition: transform 0.3s ease;
+
+  &:active {
+    transform: scale(0.7);
+  }
+`;
+
+const ButtonsContainer = styled.div`
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+`;
+
+const ResetIconContainer = styled.div`
+  cursor: pointer;
+
+  transition: transform 0.3s ease;
+
+  &:hover {
+    animation: ${rotation} 2s infinite;
+  }
 `;
 
 function App() {
@@ -214,11 +266,29 @@ function App() {
     setData(copyData);
   };
 
+  const handleSave = () => {
+    localStorage.setItem("my-data", JSON.stringify(data));
+    localStorage.setItem("title", title);
+  };
+
   const handleDone = () => {
     setEditTitle(false);
   };
 
+  const handleReset = () => {
+    localStorage.removeItem("my-data");
+    localStorage.removeItem("title");
+    setData(initialData);
+    setTitle("KANBAN");
+  };
+
   useEffect(() => {
+    const my_title = localStorage.getItem("title");
+    const my_data = JSON.parse(localStorage.getItem("my-data"));
+    if (my_data) {
+      setData(my_data);
+      setTitle(my_title);
+    }
     setCount(Object.keys(data.tasks).length + 1);
     setNumOfTasks(Object.keys(data.tasks).length);
     // eslint-disable-next-line
@@ -226,6 +296,14 @@ function App() {
 
   return (
     <Outer>
+      <ButtonsContainer>
+        <SaveIconContainer onClick={handleSave}>
+          <SaveIcon fontSize={isMobile ? "medium" : "large"} />
+        </SaveIconContainer>
+        <ResetIconContainer onClick={handleReset}>
+          <ReplayIcon fontSize={isMobile ? "medium" : "large"} />
+        </ResetIconContainer>
+      </ButtonsContainer>
       <div>
         <div>
           {editTitle ? (
@@ -246,10 +324,9 @@ function App() {
               &nbsp;
               {title}
               &nbsp;
-              <EditIcon
-                style={{ cursor: "pointer" }}
-                onClick={() => setEditTitle(true)}
-              />
+              <EditButtonContainer onClick={() => setEditTitle(true)}>
+                <EditIcon style={{ cursor: "pointer" }} />
+              </EditButtonContainer>
             </Title>
           )}
         </div>
