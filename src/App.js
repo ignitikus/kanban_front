@@ -61,8 +61,6 @@ function App() {
   };
 
   const onDragStart = (start) => {
-    // document.body.style.color = "orange";
-    // document.body.style.transition = "background-color .2s ease";
     const homeIndex = data.columnOrder.indexOf(start.source.droppableId);
     const copyData = { ...data };
     copyData.homeIndex = homeIndex;
@@ -70,8 +68,6 @@ function App() {
   };
 
   const onDragEnd = (res) => {
-    // document.body.style.color = "inherit";
-    // document.body.style.backgroundColor = "inherit";
     const copyData = { ...data };
     copyData.homeIndex = null;
     setData(copyData);
@@ -145,14 +141,6 @@ function App() {
     setData(updatedData);
   };
 
-  // const onDragUpdate = (update) => {
-  // const { destination } = update;
-  // const opacity = destination
-  //   ? destination.index / Object.keys(data.tasks).length
-  //   : 0;
-  // document.body.style.backgroundColor = `rgba(153, 141, 217, ${opacity})`;
-  // };
-
   const handleTitleChange = (e) => {
     setTitle(e.target.value);
   };
@@ -160,19 +148,27 @@ function App() {
   const handleColumnTitleChange = (id, name) => {
     const copyData = { ...data };
     copyData.columns[id].title = name;
-
     setData(copyData);
+  };
+
+  const addTask = () => {
+    const copyData = { ...data };
+    const numOfTasks = Object.keys(copyData.tasks).length;
+    if (numOfTasks < 10) {
+      copyData.tasks[`task-${numOfTasks + 1}`] = {
+        id: `task-${numOfTasks + 1}`,
+        content: `New task number ${numOfTasks + 1}`,
+      };
+      copyData.columns["column-1"].taskIds.push(`task-${numOfTasks + 1}`);
+      setData(copyData);
+    }
   };
 
   return (
     <Outer>
       <div>
         <Title value={title} onChange={handleTitleChange} />
-        <DragDropContext
-          onDragEnd={onDragEnd}
-          onDragStart={onDragStart}
-          // onDragUpdate={onDragUpdate}
-        >
+        <DragDropContext onDragEnd={onDragEnd} onDragStart={onDragStart}>
           <Droppable
             droppableId="all-columns"
             direction="horizontal"
@@ -185,17 +181,15 @@ function App() {
                   const tasks = column.taskIds.map(
                     (taskId) => data.tasks[taskId]
                   );
-                  // const isDropDisabled = index < data.homeIndex;
-                  const isDropDisabled = false;
                   return (
                     <Column
                       key={column.id}
                       column={column}
                       tasks={tasks}
-                      isDropDisabled={isDropDisabled}
                       index={index}
                       deleteTask={deleteTask}
                       handleColumnTitleChange={handleColumnTitleChange}
+                      addTask={addTask}
                     />
                   );
                 })}

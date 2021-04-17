@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 import styled from "styled-components";
+import EditIcon from "@material-ui/icons/Edit";
+import DoneIcon from "@material-ui/icons/Done";
+import AddCircleOutlineIcon from "@material-ui/icons/AddCircleOutline";
 import { Droppable, Draggable } from "react-beautiful-dnd";
 
 import Task from "../Task/Task";
@@ -16,6 +19,12 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
 `;
+
+const TitleInputWrapper = styled.div`
+  display: flex;
+  position: relative;
+`;
+
 const TitleInput = styled.input`
   padding: 10px;
   color: white;
@@ -23,7 +32,15 @@ const TitleInput = styled.input`
   border: none;
   font-size: 1.3em;
   background-color: inherit;
+  outline: none;
 `;
+const Edit = styled.div`
+  position: absolute;
+  right: 0px;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+`;
+
 const Title = styled.div`
   padding: 10px;
   color: white;
@@ -31,6 +48,12 @@ const Title = styled.div`
   border: none;
   font-size: 1.3em;
   background-color: inherit;
+  display: flex;
+  position: relative;
+
+  &:hover ${Edit} {
+    opacity: 1;
+  }
 `;
 
 const TaskList = styled.div`
@@ -40,14 +63,37 @@ const TaskList = styled.div`
     props.isDraggingOver ? "rgb(66,133,244)" : "inherit"};
   flex-grow: 1;
   min-height: 100px;
+  position: relative;
+`;
+
+const Done = styled.div`
+  position: absolute;
+  right: 0px;
+  top: 10px;
+  color: white;
+  cursor: pointer;
+`;
+
+const AddButton = styled.div`
+  color: white;
+  font-size: 1.5em;
+  position: absolute;
+  right: -15px;
+  bottom: -25px;
+  cursor: pointer;
 `;
 
 function Column(props) {
   const [toggle, setToggle] = useState(false);
   const [columnTitle, setColumnTitle] = useState(props.column.title);
 
-  const handleDoubleClick = () => {
+  const handleEdit = () => {
     setToggle(true);
+  };
+
+  const handleDone = () => {
+    setToggle(false);
+    props.handleColumnTitleChange(props.column.id, columnTitle);
   };
 
   const handleFinish = (e) => {
@@ -70,18 +116,24 @@ function Column(props) {
           isDragging={snapshot.isDragging}
         >
           {toggle ? (
-            <TitleInput
-              {...provided.dragHandleProps}
-              value={columnTitle}
-              onKeyDown={handleFinish}
-              onChange={handleInputChange}
-            />
+            <TitleInputWrapper>
+              <TitleInput
+                {...provided.dragHandleProps}
+                value={columnTitle}
+                onKeyDown={handleFinish}
+                onChange={handleInputChange}
+              />
+              <Done onClick={handleDone}>
+                <DoneIcon />
+              </Done>
+            </TitleInputWrapper>
           ) : (
-            <Title
-              {...provided.dragHandleProps}
-              onDoubleClick={handleDoubleClick}
-            >
-              {props.column.title}
+            <Title {...provided.dragHandleProps}>
+              <div style={{ width: "100%" }}>{props.column.title}</div>
+
+              <Edit onClick={handleEdit}>
+                <EditIcon />
+              </Edit>
             </Title>
           )}
 
@@ -106,6 +158,11 @@ function Column(props) {
                   />
                 ))}
                 {provided.placeholder}
+                {props.column.id === "column-1" && (
+                  <AddButton onClick={props.addTask}>
+                    <AddCircleOutlineIcon fontSize="large" />
+                  </AddButton>
+                )}
               </TaskList>
             )}
           </Droppable>
