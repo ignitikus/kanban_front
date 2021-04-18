@@ -7,7 +7,11 @@ import EditIcon from "@material-ui/icons/Edit";
 import DoneIcon from "@material-ui/icons/Done";
 import SaveIcon from "@material-ui/icons/Save";
 import ReplayIcon from "@material-ui/icons/Replay";
+import HelpIcon from "@material-ui/icons/Help";
 import TransitionsModal from "./Components/Modal/Modal";
+import InfoModal from "./Components/Modal/InfoModal";
+import Toastify from "./Components/Toastify/Toastify";
+import { failureToast, successToast } from "./Components/Toastify/Toast";
 
 import { useDispatch, useSelector } from "react-redux";
 
@@ -23,6 +27,27 @@ import {
   rearrangeTasksDifferentColumn,
 } from "./redux/actions/dataActions";
 import "./App.css";
+
+const vibrate = keyframes`
+ 0% {
+    transform: translate(0);
+  }
+  20% {
+    transform: translate(-2px, 2px);
+  }
+  40% {
+    transform: translate(-2px, -2px);
+  }
+  60% {
+    transform: translate(2px, 2px);
+  }
+  80% {
+    transform: translate(2px, -2px);
+  }
+  100% {
+    transform: translate(0);
+  }
+`;
 
 const gradient = keyframes`
   0% {
@@ -141,6 +166,16 @@ const ResetIconContainer = styled.div`
   }
 `;
 
+const HelpIconContainer = styled.div`
+  cursor: pointer;
+
+  transition: transform 0.3s ease;
+
+  &:hover {
+    animation: ${vibrate} 0.5s infinite;
+  }
+`;
+
 function App() {
   const { boardName, columnOrder, columns, tasks } = useSelector(
     (state) => state.data
@@ -151,6 +186,7 @@ function App() {
 
   const [editTitle, setEditTitle] = useState(false);
   const [openModal, setOpenModal] = useState(false);
+  const [openInfoModal, setOpenInfoModal] = useState(false);
 
   const onDragStart = (start) => {
     dispatch(dragStart(start.source.droppableId));
@@ -214,11 +250,28 @@ function App() {
   };
 
   const handleSave = () => {
-    dispatch(saveBoard({ boardName: title }));
+    try {
+      dispatch(saveBoard({ boardName: title }));
+      successToast(
+        `Board: "${title}" is saved to local storage of your browser`
+      );
+    } catch (error) {
+      failureToast(error.message);
+    }
   };
 
   const handleReset = () => {
-    dispatch(resetData());
+    try {
+      dispatch(resetData());
+      setTitle("KANBAN");
+      successToast(`Everything is reset to default`);
+    } catch (error) {
+      failureToast(error.message);
+    }
+  };
+
+  const handleOpenInfoModal = () => {
+    setOpenInfoModal(true);
   };
 
   useEffect(() => {
@@ -228,6 +281,8 @@ function App() {
 
   return (
     <Outer>
+      <Toastify />
+      <InfoModal open={openInfoModal} showModal={setOpenInfoModal} />
       <TransitionsModal
         open={openModal}
         showModal={setOpenModal}
@@ -241,6 +296,9 @@ function App() {
         <ResetIconContainer onClick={handleReset}>
           <ReplayIcon fontSize={isMobile ? "default" : "large"} />
         </ResetIconContainer>
+        <HelpIconContainer onClick={handleOpenInfoModal}>
+          <HelpIcon fontSize={isMobile ? "default" : "large"} />
+        </HelpIconContainer>
       </ButtonsContainer>
       <div>
         <div>

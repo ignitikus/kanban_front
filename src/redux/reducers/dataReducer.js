@@ -1,3 +1,5 @@
+import { failureToast } from "../../Components/Toastify/Toast";
+
 const initialState = {
   boardName: "KANBAN",
   homeIndex: null,
@@ -78,7 +80,6 @@ export default function dataReducer(state = initialState, action) {
       );
       return { ...state, columnOrder: newColumnOrder };
     case "REARRANGE TASKS SAME COLUMN":
-      console.log(action.payload);
       const newTaskIds = [...action.payload.start.taskIds];
       newTaskIds.splice(action.payload.source.index, 1);
       newTaskIds.splice(
@@ -118,7 +119,6 @@ export default function dataReducer(state = initialState, action) {
       return { ...state };
 
     case "ADD TASK":
-      // const copyData = { ...data };
       if (state.numOfTasks < 10) {
         state.tasks[`task-${state.countOfTasks + 1}`] = {
           id: `task-${state.countOfTasks + 1}`,
@@ -132,10 +132,12 @@ export default function dataReducer(state = initialState, action) {
           numOfTasks: state.numOfTasks + 1,
           countOfTasks: state.countOfTasks + 1,
         };
+      } else {
+        failureToast("Current limit is 10 tasks");
+        return {
+          ...state,
+        };
       }
-      return {
-        ...state,
-      };
 
     case "CHANGE COLUMN NAME":
       const columnsCopy = { ...state.columns };
