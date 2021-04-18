@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import initialData from "./initial_data.js";
 import Column from "./Components/Column/Column";
 import { DragDropContext, Droppable } from "react-beautiful-dnd";
 import styled, { keyframes } from "styled-components";
@@ -8,6 +7,21 @@ import EditIcon from "@material-ui/icons/Edit";
 import DoneIcon from "@material-ui/icons/Done";
 import SaveIcon from "@material-ui/icons/Save";
 import ReplayIcon from "@material-ui/icons/Replay";
+import TransitionsModal from "./Components/Modal/Modal";
+
+import { useDispatch, useSelector } from "react-redux";
+
+import {
+  loadData,
+  resetData,
+  saveBoard,
+  changeTitle,
+  dragStart,
+  nullHomeIndex,
+  rearrangeColumns,
+  rearrangeTasksSameColumn,
+  rearrangeTasksDifferentColumn,
+} from "./redux/actions/dataActions";
 import "./App.css";
 
 const gradient = keyframes`
@@ -128,180 +142,104 @@ const ResetIconContainer = styled.div`
 `;
 
 function App() {
-  const [data, setData] = useState(initialData);
-  const [title, setTitle] = useState("KANBAN");
-  const [count, setCount] = useState(0);
-  const [numOfTasks, setNumOfTasks] = useState(0);
-  const [editTitle, setEditTitle] = useState(false);
+  const { boardName, columnOrder, columns, tasks } = useSelector(
+    (state) => state.data
+  );
+  const dispatch = useDispatch();
 
-  const deleteTask = (taskId, columnId) => {
-    const dataCopy = { ...data };
-    const taskIndex = dataCopy.columns[columnId].taskIds.indexOf(taskId);
-    dataCopy.columns[columnId].taskIds.splice(taskIndex, 1);
-    delete dataCopy.tasks[taskId];
-    setData(dataCopy);
-    setNumOfTasks(numOfTasks - 1);
-  };
+  const [title, setTitle] = useState(boardName);
+
+  const [editTitle, setEditTitle] = useState(false);
+  const [openModal, setOpenModal] = useState(false);
 
   const onDragStart = (start) => {
-    const homeIndex = data.columnOrder.indexOf(start.source.droppableId);
-    const copyData = { ...data };
-    copyData.homeIndex = homeIndex;
-    setData(copyData);
+    dispatch(dragStart(start.source.droppableId));
   };
 
   const onDragEnd = (res) => {
-    const copyData = { ...data };
-    copyData.homeIndex = null;
-    setData(copyData);
-
+    dispatch(nullHomeIndex());
     const { destination, source, draggableId, type } = res;
     if (!destination) return;
-
     if (
       destination.droppableId === source.droppableId &&
       destination.index === source.index
     )
       return;
-
     if (type === "column") {
-      const newColumnOrder = [...data.columnOrder];
-      newColumnOrder.splice(source.index, 1);
-      newColumnOrder.splice(destination.index, 0, draggableId);
-
-      const updatedStateData = {
-        ...data,
-      };
-
-      updatedStateData.columnOrder = newColumnOrder;
-      setData(updatedStateData);
+      dispatch(rearrangeColumns({ destination, source, draggableId }));
       return;
     }
-
-    const start = data.columns[source.droppableId];
-    const finish = data.columns[destination.droppableId];
+    const start = columns[source.droppableId];
+    const finish = columns[destination.droppableId];
 
     if (start === finish) {
-      const newTaskIds = [...start.taskIds];
-      newTaskIds.splice(source.index, 1);
-      newTaskIds.splice(destination.index, 0, draggableId);
-
-      const newColumn = {
-        ...start,
-        taskIds: newTaskIds,
-      };
-
-      const newData = {
-        ...data,
-      };
-      newData.columns[newColumn.id] = newColumn;
-
-      setData(newData);
+      dispatch(
+        rearrangeTasksSameColumn({ destination, source, draggableId, start })
+      );
       return;
     }
-    const startTaskIds = [...start.taskIds];
-    startTaskIds.splice(source.index, 1);
 
-    const newStart = {
-      ...start,
-      taskIds: startTaskIds,
-    };
-
-    const finishTaskIds = [...finish.taskIds];
-    finishTaskIds.splice(destination.index, 0, draggableId);
-
-    const newFinish = {
-      ...finish,
-      taskIds: finishTaskIds,
-    };
-
-    const updatedData = {
-      ...data,
-    };
-    updatedData.columns[newStart.id] = newStart;
-    updatedData.columns[newFinish.id] = newFinish;
-
-    setData(updatedData);
+    dispatch(
+      rearrangeTasksDifferentColumn({
+        destination,
+        source,
+        draggableId,
+        start,
+        finish,
+      })
+    );
   };
 
   const handleTitleChange = (e) => {
-    console.log(e);
-    if (title.length < 25) {
-      setTitle(e.target.value);
-    } else {
-    }
-  };
-
-  const handleFinish = (e) => {
-    if (e.keyCode === 13 || e.keyCode === 27) {
-      setEditTitle(false);
-      setTitle(e.target.value);
-    }
-  };
-
-  const handleColumnTitleChange = (id, name) => {
-    const copyData = { ...data };
-    copyData.columns[id].title = name;
-    setData(copyData);
-  };
-
-  const addTask = () => {
-    const copyData = { ...data };
-    if (numOfTasks < 10) {
-      copyData.tasks[`task-${count}`] = {
-        id: `task-${count}`,
-        content: `New task number ${count}`,
-      };
-      copyData.columns["column-1"].taskIds.push(`task-${count}`);
-      setData(copyData);
-      setCount(count + 1);
-      setNumOfTasks(numOfTasks + 1);
-    }
-  };
-
-  const editTask = (id, content) => {
-    const copyData = { ...data };
-    copyData.tasks[id].content = content;
-
-    setData(copyData);
-  };
-
-  const handleSave = () => {
-    localStorage.setItem("my-data", JSON.stringify(data));
-    localStorage.setItem("title", title);
+    setTitle(e.target.value);
   };
 
   const handleDone = () => {
     setEditTitle(false);
+    dispatch(changeTitle(title));
+  };
+
+  const handleFinish = (e) => {
+    if (e.keyCode === 13 || e.keyCode === 27) {
+      handleDone();
+    }
+  };
+
+  const handleTitleDoubleClick = () => {
+    if (isMobile) {
+      setOpenModal(true);
+    } else {
+      setEditTitle(true);
+    }
+  };
+
+  const handleSave = () => {
+    dispatch(saveBoard({ boardName: title }));
   };
 
   const handleReset = () => {
-    localStorage.removeItem("my-data");
-    localStorage.removeItem("title");
-    setData(initialData);
-    setTitle("KANBAN");
+    dispatch(resetData());
   };
 
   useEffect(() => {
-    const my_title = localStorage.getItem("title");
-    const my_data = JSON.parse(localStorage.getItem("my-data"));
-    if (my_data) {
-      setData(my_data);
-      setTitle(my_title);
-    }
-    setCount(Object.keys(data.tasks).length + 1);
-    setNumOfTasks(Object.keys(data.tasks).length);
+    dispatch(loadData());
     // eslint-disable-next-line
   }, []);
 
   return (
     <Outer>
+      <TransitionsModal
+        open={openModal}
+        showModal={setOpenModal}
+        inputValue={title}
+        mode={"title"}
+      />
       <ButtonsContainer>
         <SaveIconContainer onClick={handleSave}>
-          <SaveIcon fontSize={isMobile ? "medium" : "large"} />
+          <SaveIcon fontSize={isMobile ? "default" : "large"} />
         </SaveIconContainer>
         <ResetIconContainer onClick={handleReset}>
-          <ReplayIcon fontSize={isMobile ? "medium" : "large"} />
+          <ReplayIcon fontSize={isMobile ? "default" : "large"} />
         </ResetIconContainer>
       </ButtonsContainer>
       <div>
@@ -312,6 +250,7 @@ function App() {
                 value={title}
                 onChange={handleTitleChange}
                 onKeyDown={handleFinish}
+                maxLength="20"
                 autoFocus
               />
               <Done onClick={handleDone}>
@@ -319,12 +258,12 @@ function App() {
               </Done>
             </TitleContainer>
           ) : (
-            <Title onDoubleClick={() => setEditTitle(true)}>
+            <Title onDoubleClick={handleTitleDoubleClick}>
               <EditIcon style={{ opacity: "0" }} />
               &nbsp;
-              {title}
+              {boardName}
               &nbsp;
-              <EditButtonContainer onClick={() => setEditTitle(true)}>
+              <EditButtonContainer onClick={handleTitleDoubleClick}>
                 <EditIcon style={{ cursor: "pointer" }} />
               </EditButtonContainer>
             </Title>
@@ -338,21 +277,18 @@ function App() {
           >
             {(provided) => (
               <Container {...provided.droppableProps} ref={provided.innerRef}>
-                {data.columnOrder.map((columnId, index) => {
-                  const column = data.columns[columnId];
-                  const tasks = column.taskIds.map(
-                    (taskId) => data.tasks[taskId]
+                {columnOrder.map((columnId, index) => {
+                  const column = columns[columnId];
+                  const columnTasks = column.taskIds.map(
+                    (taskId) => tasks[taskId]
                   );
                   return (
                     <Column
                       key={column.id}
                       column={column}
-                      tasks={tasks}
+                      tasks={columnTasks}
                       index={index}
-                      deleteTask={deleteTask}
-                      handleColumnTitleChange={handleColumnTitleChange}
-                      addTask={addTask}
-                      editTask={editTask}
+                      isMobile={isMobile}
                     />
                   );
                 })}

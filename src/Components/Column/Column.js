@@ -4,6 +4,10 @@ import EditIcon from "@material-ui/icons/Edit";
 import DoneIcon from "@material-ui/icons/Done";
 import AddCircleOutlineIcon from "@material-ui/icons/AddCircleOutline";
 import { Droppable, Draggable } from "react-beautiful-dnd";
+import { useDispatch } from "react-redux";
+import TransitionsModal from "../Modal/Modal";
+
+import { addTask, changeColumnName } from "../../redux/actions/dataActions";
 
 import Task from "../Task/Task";
 
@@ -82,23 +86,34 @@ const AddButton = styled.div`
   cursor: pointer;
 `;
 
+// export default
 function Column(props) {
   const [toggle, setToggle] = useState(false);
+  const [openModal, setOpenModal] = useState(false);
+
   const [columnTitle, setColumnTitle] = useState(props.column.title);
+  const dispatch = useDispatch();
+
+  const handleAddTask = () => {
+    dispatch(addTask());
+  };
 
   const handleEdit = () => {
-    setToggle(true);
+    if (props.isMobile) {
+      setOpenModal(true);
+    } else {
+      setToggle(true);
+    }
   };
 
   const handleDone = () => {
     setToggle(false);
-    props.handleColumnTitleChange(props.column.id, columnTitle);
+    dispatch(changeColumnName({ id: props.column.id, title: columnTitle }));
   };
 
   const handleFinish = (e) => {
     if (e.keyCode === 13 || e.keyCode === 27) {
-      setToggle(false);
-      props.handleColumnTitleChange(props.column.id, columnTitle);
+      handleDone();
     }
   };
 
@@ -107,74 +122,85 @@ function Column(props) {
   };
 
   return (
-    <Draggable draggableId={props.column.id} index={props.index}>
-      {(provided, snapshot) => (
-        <Container
-          {...provided.draggableProps}
-          ref={provided.innerRef}
-          isDragging={snapshot.isDragging}
-        >
-          {toggle ? (
-            <TitleInputWrapper>
-              <TitleInput
-                {...provided.dragHandleProps}
-                value={columnTitle}
-                onKeyDown={handleFinish}
-                onChange={handleInputChange}
-                autoFocus
-              />
-              <Done onClick={handleDone}>
-                <DoneIcon />
-              </Done>
-            </TitleInputWrapper>
-          ) : (
-            <Title {...provided.dragHandleProps} onDoubleClick={handleEdit}>
-              <div style={{ width: "100%" }}>{props.column.title}</div>
-
-              <Edit onClick={handleEdit}>
-                <EditIcon />
-              </Edit>
-            </Title>
-          )}
-
-          <Droppable
-            droppableId={props.column.id}
-            isDropDisabled={props.isDropDisabled}
-            type="task"
+    <>
+      <TransitionsModal
+        open={openModal}
+        showModal={setOpenModal}
+        inputValue={columnTitle}
+        id={props.column.id}
+        mode={"column"}
+      />
+      <Draggable draggableId={props.column.id} index={props.index}>
+        {(provided, snapshot) => (
+          <Container
+            {...provided.draggableProps}
+            ref={provided.innerRef}
+            isDragging={snapshot.isDragging}
           >
-            {(provided, snapshot) => (
-              <TaskList
-                ref={provided.innerRef}
-                {...provided.droppableProps}
-                isDraggingOver={snapshot.isDraggingOver}
-              >
-                {props.tasks.map((task, ind) => (
-                  <Task
-                    key={task.id}
-                    task={task}
-                    index={ind}
-                    deleteTask={props.deleteTask}
-                    columnName={props.column.id}
-                    editTask={props.editTask}
-                  />
-                ))}
-                {provided.placeholder}
-                {props.column.id === "column-1" && (
-                  <AddButton onClick={props.addTask}>
-                    <AddCircleOutlineIcon fontSize="large" />
-                  </AddButton>
-                )}
-              </TaskList>
+            {toggle ? (
+              <TitleInputWrapper>
+                <TitleInput
+                  {...provided.dragHandleProps}
+                  value={columnTitle}
+                  onKeyDown={handleFinish}
+                  onChange={handleInputChange}
+                  maxLength="20"
+                  autoFocus
+                />
+                <Done onClick={handleDone}>
+                  <DoneIcon />
+                </Done>
+              </TitleInputWrapper>
+            ) : (
+              <Title {...provided.dragHandleProps} onDoubleClick={handleEdit}>
+                <div style={{ width: "100%" }}>{props.column.title}</div>
+
+                <Edit onClick={handleEdit}>
+                  <EditIcon />
+                </Edit>
+              </Title>
             )}
-          </Droppable>
-        </Container>
-      )}
-    </Draggable>
+
+            <Droppable
+              droppableId={props.column.id}
+              isDropDisabled={props.isDropDisabled}
+              type="task"
+            >
+              {(provided, snapshot) => (
+                <TaskList
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  isDraggingOver={snapshot.isDraggingOver}
+                >
+                  {props.tasks.map((task, ind) => (
+                    <Task
+                      key={task.id}
+                      task={task}
+                      content={task.content}
+                      id={task.id}
+                      index={ind}
+                      columnName={props.column.id}
+                      isMobile={props.isMobile}
+                    />
+                  ))}
+                  {provided.placeholder}
+                  {props.column.id === "column-1" && (
+                    <AddButton onClick={handleAddTask}>
+                      <AddCircleOutlineIcon fontSize="large" />
+                    </AddButton>
+                  )}
+                </TaskList>
+              )}
+            </Droppable>
+          </Container>
+        )}
+      </Draggable>
+    </>
   );
 }
 
 export default React.memo(Column, (props, nextProps) => {
-  if (props.prop1 === nextProps.prop1) {
+  if (props.prop === nextProps.prop) {
     return false;
   }
   return true;

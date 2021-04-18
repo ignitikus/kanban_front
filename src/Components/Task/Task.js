@@ -1,7 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import { Draggable } from "react-beautiful-dnd";
 import DoneIcon from "@material-ui/icons/Done";
+import TransitionsModal from "../Modal/Modal";
+
+import { deleteTask, editTaskBody } from "../../redux/actions/dataActions";
+
+import { useDispatch } from "react-redux";
 
 const appear = keyframes`
    0%{
@@ -85,7 +90,10 @@ const TaskInput = styled.input`
 export default function Task(props) {
   const [block, setBlock] = useState(false);
   const [edit, setEdit] = useState(false);
+  const [openModal, setOpenModal] = useState(false);
+
   const [taskBody, setTaskBody] = useState(props.task.content);
+  const dispatch = useDispatch();
 
   const handleCheckBox = () => {
     setBlock(!block);
@@ -97,64 +105,84 @@ export default function Task(props) {
 
   const handleEditDone = () => {
     setEdit(false);
-    props.editTask(props.task.id, taskBody);
+    dispatch(editTaskBody({ id: props.task.id, taskBody }));
   };
 
   const handleFinish = (e) => {
     if (e.keyCode === 13 || e.keyCode === 27) {
-      setEdit(false);
-      props.editTask(props.task.id, taskBody);
+      handleEditDone();
     }
   };
 
+  const handleEdit = () => {
+    if (props.isMobile) {
+      setOpenModal(true);
+    } else {
+      setEdit(true);
+    }
+  };
+
+  const handleDeleteTask = () => {
+    dispatch(
+      deleteTask({
+        taskId: props.task.id,
+        columnId: props.columnName,
+      })
+    );
+  };
+
   return (
-    <Draggable
-      draggableId={props.task.id}
-      index={props.index}
-      isDragDisabled={block}
-    >
-      {(provided, snapshot) => (
-        <Container
-          {...provided.dragHandleProps}
-          {...provided.draggableProps}
-          ref={provided.innerRef}
-          isDragging={snapshot.isDragging}
-          isDragDisabled={block}
-        >
-          {!edit ? (
-            <TaskBody onDoubleClick={() => setEdit(true)}>
-              <CheckBox
-                type="checkbox"
-                checked={block}
-                onChange={handleCheckBox}
-              />
-              {taskBody}
-              {!block && (
-                <CloseButton
-                  onClick={() =>
-                    props.deleteTask(props.task.id, props.columnName)
-                  }
-                >
-                  x
-                </CloseButton>
-              )}
-            </TaskBody>
-          ) : (
-            <>
-              <TaskInput
-                value={taskBody}
-                onChange={handleTaskEdit}
-                autoFocus
-                onKeyDown={handleFinish}
-              />
-              <DoneIcon
-                onClick={handleEditDone}
-                style={{ cursor: "pointer" }}
-              />
-            </>
-          )}
-        </Container>
-      )}
-    </Draggable>
+    <>
+      <TransitionsModal
+        open={openModal}
+        showModal={setOpenModal}
+        inputValue={props.task.content}
+        id={props.task.id}
+        mode={"task"}
+        setTaskBody={setTaskBody}
+      />
+      <Draggable
+        draggableId={props.id}
+        index={props.index}
+        isDragDisabled={block}
+      >
+        {(provided, snapshot) => (
+          <Container
+            {...provided.dragHandleProps}
+            {...provided.draggableProps}
+            ref={provided.innerRef}
+            isDragging={snapshot.isDragging}
+            isDragDisabled={block}
+          >
+            {!edit ? (
+              <TaskBody onDoubleClick={handleEdit}>
+                <CheckBox
+                  type="checkbox"
+                  checked={block}
+                  onChange={handleCheckBox}
+                />
+                {taskBody}
+                {!block && (
+                  <CloseButton onClick={handleDeleteTask}>x</CloseButton>
+                )}
+              </TaskBody>
+            ) : (
+              <>
+                <TaskInput
+                  value={taskBody}
+                  onChange={handleTaskEdit}
+                  autoFocus
+                  onKeyDown={handleFinish}
+                />
+                <DoneIcon
+                  onClick={handleEditDone}
+                  style={{ cursor: "pointer" }}
+                />
+              </>
+            )}
+          </Container>
+        )}
+      </Draggable>
+    </>
   );
 }
