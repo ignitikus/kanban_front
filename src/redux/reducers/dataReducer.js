@@ -8,13 +8,12 @@ const initialState = {
     "task-2": { id: "task-2", content: "Watch my favorite show" },
     "task-3": { id: "task-3", content: "Charge my phone" },
     "task-4": { id: "task-4", content: "Cook dinner" },
-    "task-5": { id: "task-5", content: "Cook dinner2" },
   },
   columns: {
     "column-1": {
       id: "column-1",
       title: "TODO",
-      taskIds: ["task-1", "task-2", "task-3", "task-4", "task-5"],
+      taskIds: ["task-1", "task-2", "task-3", "task-4"],
     },
     "column-2": {
       id: "column-2",
@@ -28,8 +27,8 @@ const initialState = {
     },
   },
   columnOrder: ["column-1", "column-2", "column-3"],
-  numOfTasks: 5,
-  countOfTasks: 5,
+  numOfTasks: 4,
+  countOfTasks: 4,
 };
 
 export default function dataReducer(state = initialState, action) {

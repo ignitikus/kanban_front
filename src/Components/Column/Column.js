@@ -21,6 +21,7 @@ const Container = styled.div`
   user-select: none;
   display: flex;
   flex-direction: column;
+  padding-bottom: 10px;
 `;
 
 const TitleInputWrapper = styled.div`
@@ -82,7 +83,7 @@ const AddButton = styled.div`
   font-size: 1.5em;
   position: absolute;
   right: -15px;
-  bottom: -25px;
+  bottom: -35px;
   cursor: pointer;
 `;
 

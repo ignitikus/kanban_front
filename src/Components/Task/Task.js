@@ -3,6 +3,8 @@ import styled, { keyframes } from "styled-components";
 import { Draggable } from "react-beautiful-dnd";
 import DoneIcon from "@material-ui/icons/Done";
 import TransitionsModal from "../Modal/Modal";
+import EditIcon from "@material-ui/icons/Edit";
+import CloseIcon from "@material-ui/icons/Close";
 
 import { deleteTask, editTaskBody } from "../../redux/actions/dataActions";
 
@@ -43,9 +45,37 @@ const shake = keyframes`
 
 const CloseButton = styled.div`
   position: absolute;
-  top: 0px;
-  right: 5px;
+  top: -5px;
+  right: -5px;
   opacity: 0;
+  background-color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.5s ease;
+  animation: ${shake} 1s linear infinite;
+  font-size: 1.3em;
+
+  &:hover {
+    cursor: pointer;
+  }
+`;
+
+const EditIconContainer = styled.div`
+  opacity: 0;
+  position: absolute;
+  bottom: -5px;
+  right: -5px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: white;
   transition: opacity 0.5s ease;
   animation: ${shake} 1s linear infinite;
   font-size: 1.3em;
@@ -70,6 +100,9 @@ const Container = styled.div`
   display: flex;
   animation: ${appear} 1s ease-in;
   &:hover ${CloseButton} {
+    opacity: 1;
+  }
+  &:hover ${EditIconContainer} {
     opacity: 1;
   }
 `;
@@ -155,7 +188,7 @@ export default function Task(props) {
             isDragDisabled={block}
           >
             {!edit ? (
-              <TaskBody onDoubleClick={handleEdit}>
+              <TaskBody onDoubleClick={!block ? handleEdit : null}>
                 <CheckBox
                   type="checkbox"
                   checked={block}
@@ -163,7 +196,14 @@ export default function Task(props) {
                 />
                 {taskBody}
                 {!block && (
-                  <CloseButton onClick={handleDeleteTask}>x</CloseButton>
+                  <>
+                    <CloseButton onClick={handleDeleteTask}>
+                      <CloseIcon fontSize="inherit" />
+                    </CloseButton>
+                    <EditIconContainer onClick={handleEdit}>
+                      <EditIcon fontSize="inherit" />
+                    </EditIconContainer>
+                  </>
                 )}
               </TaskBody>
             ) : (
