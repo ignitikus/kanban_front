@@ -263,7 +263,6 @@ function App() {
   const handleReset = () => {
     try {
       dispatch(resetData());
-      setTitle("KANBAN");
       successToast(`Everything is reset to default`);
     } catch (error) {
       failureToast(error.message);
